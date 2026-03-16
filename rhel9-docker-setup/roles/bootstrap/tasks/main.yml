@@ -21,6 +21,7 @@
     password: "{{ vault_ansible_password | password_hash('sha512') }}"
     create_home: true
     state: present
+    update_password: on_create
 
 # ---------------------------------------------------------------------------
 # Add ansible user to the wheel group so standard sudo rules apply

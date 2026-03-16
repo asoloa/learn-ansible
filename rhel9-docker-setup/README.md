@@ -322,6 +322,8 @@ Every task is designed to be safely re-run:
 - `docker swarm join` is likewise guarded and skipped if already in the swarm.
 - Firewall rules use `permanent: true` and `immediate: true` together.
 
+<img src="assets/idempotent_playbook.png" alt="Idempotent playbook execution" style="width: 50%;" />
+
 ---
 
 ## Extending the Setup
