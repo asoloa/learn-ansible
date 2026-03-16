@@ -37,6 +37,20 @@
     state: present
 
 # ---------------------------------------------------------------------------
+# Install Docker SDK for Python (required by community.docker Ansible modules)
+# ---------------------------------------------------------------------------
+- name: Ensure pip is available
+  ansible.builtin.dnf:
+    name: python3-pip
+    state: present
+
+- name: Install Docker SDK for Python
+  ansible.builtin.pip:
+    name: "{{ docker_sdk_packages }}"
+    state: present
+    executable: pip3
+
+# ---------------------------------------------------------------------------
 # Configure Docker daemon
 # ---------------------------------------------------------------------------
 - name: Ensure /etc/docker directory exists

@@ -11,6 +11,12 @@ docker_packages:
   - docker-compose-plugin
 
 # ---------------------------------------------------------------------------
+# Python packages required by community.docker Ansible modules
+# ---------------------------------------------------------------------------
+docker_sdk_packages:
+  - docker
+
+# ---------------------------------------------------------------------------
 # Docker daemon configuration written to /etc/docker/daemon.json
 # ---------------------------------------------------------------------------
 docker_daemon_config:

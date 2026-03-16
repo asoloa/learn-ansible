@@ -1,36 +1,30 @@
 ---
 # ---------------------------------------------------------------------------
-# Check current swarm state so join is idempotent
-# ---------------------------------------------------------------------------
-- name: Get current Docker Swarm state on worker
-  ansible.builtin.shell:
-    cmd: docker info 2>/dev/null | grep "Swarm:" | awk '{print $2}'
-  register: worker_swarm_state
-  changed_when: false
-
-# ---------------------------------------------------------------------------
-# Join the swarm using the token published by the manager role
+# Join swarm – idempotent, no-op when already active
 # ---------------------------------------------------------------------------
 - name: Join Docker Swarm as worker
-  ansible.builtin.command:
-    cmd: >
-      docker swarm join
-      --token {{ hostvars[groups['swarm_managers'][0]]['swarm_worker_token'] }}
-      {{ hostvars[groups['swarm_managers'][0]]['swarm_advertise_addr'] }}:{{ swarm_port }}
-  when: worker_swarm_state.stdout != 'active'
+  community.docker.docker_swarm:
+    state: join
+    advertise_addr: "{{ ansible_host }}"
+    join_token: "{{ hostvars[groups['swarm_managers'][0]]['swarm_worker_token'] }}"
+    remote_addrs:
+      - "{{ hostvars[groups['swarm_managers'][0]]['swarm_advertise_addr'] }}:{{ swarm_port }}"
 
 # ---------------------------------------------------------------------------
-# Verify the node joined successfully
+# Verify the node appears as ready – queried from the manager
 # ---------------------------------------------------------------------------
-- name: Confirm worker swarm state after join
-  ansible.builtin.shell:
-    cmd: docker info 2>/dev/null | grep "Swarm:" | awk '{print $2}'
-  register: post_join_state
-  changed_when: false
+- name: Retrieve worker node info from swarm manager
+  community.docker.docker_swarm_info:
+    nodes: true
+    nodes_filters:
+      name: "{{ swarm_node_hostname }}"
+  register: worker_node_info
+  delegate_to: "{{ groups['swarm_managers'][0] }}"
 
-- name: Assert node is now part of the swarm
+- name: Assert worker node is active and ready in the swarm
   ansible.builtin.assert:
     that:
-      - post_join_state.stdout == 'active'
-    fail_msg: "Worker node failed to join the swarm. Check token and connectivity."
-    success_msg: "Worker node successfully joined the swarm."
+      - worker_node_info.nodes | length > 0
+      - worker_node_info.nodes[0].Status == 'ready'
+    fail_msg: "Worker node {{ swarm_node_hostname }} is not ready in the swarm. Check token and connectivity."
+    success_msg: "Worker node {{ swarm_node_hostname }} is active and ready in the swarm."
