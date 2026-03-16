@@ -1,0 +1,21 @@
+---
+# ---------------------------------------------------------------------------
+# Docker CE packages
+# (override in group_vars/host_vars if pinning a specific version)
+# ---------------------------------------------------------------------------
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# ---------------------------------------------------------------------------
+# Docker daemon configuration written to /etc/docker/daemon.json
+# ---------------------------------------------------------------------------
+docker_daemon_config:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "100m"
+    max-file: "3"
+  storage-driver: "overlay2"

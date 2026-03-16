@@ -1,0 +1,36 @@
+---
+# ---------------------------------------------------------------------------
+# Check current swarm state so join is idempotent
+# ---------------------------------------------------------------------------
+- name: Get current Docker Swarm state on worker
+  ansible.builtin.shell:
+    cmd: docker info 2>/dev/null | grep "Swarm:" | awk '{print $2}'
+  register: worker_swarm_state
+  changed_when: false
+
+# ---------------------------------------------------------------------------
+# Join the swarm using the token published by the manager role
+# ---------------------------------------------------------------------------
+- name: Join Docker Swarm as worker
+  ansible.builtin.command:
+    cmd: >
+      docker swarm join
+      --token {{ hostvars[groups['swarm_managers'][0]]['swarm_worker_token'] }}
+      {{ hostvars[groups['swarm_managers'][0]]['swarm_advertise_addr'] }}:{{ swarm_port }}
+  when: worker_swarm_state.stdout != 'active'
+
+# ---------------------------------------------------------------------------
+# Verify the node joined successfully
+# ---------------------------------------------------------------------------
+- name: Confirm worker swarm state after join
+  ansible.builtin.shell:
+    cmd: docker info 2>/dev/null | grep "Swarm:" | awk '{print $2}'
+  register: post_join_state
+  changed_when: false
+
+- name: Assert node is now part of the swarm
+  ansible.builtin.assert:
+    that:
+      - post_join_state.stdout == 'active'
+    fail_msg: "Worker node failed to join the swarm. Check token and connectivity."
+    success_msg: "Worker node successfully joined the swarm."

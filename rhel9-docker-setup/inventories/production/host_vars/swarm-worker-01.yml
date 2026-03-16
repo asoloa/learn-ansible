@@ -1,0 +1,6 @@
+---
+# ---------------------------------------------------------------------------
+# Update these values to match your worker node's actual IP address.
+# ---------------------------------------------------------------------------
+ansible_host: 192.168.254.202
+swarm_node_hostname: swarm-worker-01

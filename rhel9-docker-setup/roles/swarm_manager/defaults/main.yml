@@ -1,0 +1,3 @@
+---
+# swarm_port is defined in group_vars/all/vars.yml (default: 2377)
+# swarm_advertise_addr is defined in host_vars/swarm-manager-01/vars.yml

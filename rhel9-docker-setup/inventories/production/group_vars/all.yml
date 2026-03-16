@@ -1,0 +1,30 @@
+---
+# ---------------------------------------------------------------------------
+# Connection settings
+# ---------------------------------------------------------------------------
+ansible_user: ansible
+ansible_password: "{{ vault_ansible_password }}"
+ansible_become: true
+ansible_become_method: sudo
+ansible_become_password: "{{ vault_become_password }}"
+
+# ---------------------------------------------------------------------------
+# Bootstrap – initial user used before the ansible OS user is created.
+# Overridden per-play in site.yml for the bootstrap play.
+# ---------------------------------------------------------------------------
+bootstrap_user: root
+
+# ---------------------------------------------------------------------------
+# Docker Swarm – ports used by firewall and swarm join
+# ---------------------------------------------------------------------------
+swarm_port: 2377
+
+# ---------------------------------------------------------------------------
+# Docker – packages to install
+# ---------------------------------------------------------------------------
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin

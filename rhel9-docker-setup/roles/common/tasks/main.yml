@@ -1,0 +1,42 @@
+---
+- name: Set system hostname
+  ansible.builtin.hostname:
+    name: "{{ swarm_node_hostname }}"
+
+- name: Deploy /etc/hosts with all swarm-node entries
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install common system packages
+  ansible.builtin.dnf:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ common_timezone }}"
+
+- name: Enable and start chronyd (NTP)
+  ansible.builtin.service:
+    name: chronyd
+    state: started
+    enabled: true
+
+- name: Enable and start firewalld
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Open Docker Swarm firewall ports
+  ansible.posix.firewalld:
+    port: "{{ item.port }}/{{ item.proto }}"
+    state: enabled
+    permanent: true
+    immediate: true
+  loop: "{{ swarm_firewall_ports }}"
+  notify: Reload firewalld

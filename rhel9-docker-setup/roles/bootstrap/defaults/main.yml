@@ -1,0 +1,22 @@
+---
+# ---------------------------------------------------------------------------
+# User used for the initial connection (before ansible user exists).
+# On a fresh AlmaLinux 9 install this is typically root.
+# Override in host_vars if your provider uses a different initial admin user.
+# ---------------------------------------------------------------------------
+bootstrap_user: root
+
+# ---------------------------------------------------------------------------
+# ansible OS user settings
+# ---------------------------------------------------------------------------
+ansible_os_user: "{{ 'ansible' if ansible_user == bootstrap_user else ansible_user }}"
+ansible_os_user_shell: /bin/bash
+ansible_os_user_comment: "Ansible automation user"
+
+# ---------------------------------------------------------------------------
+# Sudoers drop-in configuration
+# ---------------------------------------------------------------------------
+ansible_sudoers_file: /etc/sudoers.d/ansible
+# Requires sudo password – supplied at run-time via ansible_become_password.
+# Set to "NOPASSWD: ALL" to use passwordless sudo (less secure).
+ansible_sudo_spec: "ALL=(ALL) ALL"

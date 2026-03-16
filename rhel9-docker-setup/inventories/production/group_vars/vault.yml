@@ -1,0 +1,17 @@
+---
+# ---------------------------------------------------------------------------
+# IMPORTANT: Encrypt this file with ansible-vault before committing.
+#
+#   ansible-vault encrypt inventories/production/group_vars/vault.yml
+#
+# All variables here follow the vault_ prefix convention and are referenced
+# by their counterparts in all.yml.
+#
+# Load at run-time with:
+#   ansible-playbook site.yml -e @inventories/production/group_vars/vault.yml \
+#     --vault-password-file .vault_pass
+# ---------------------------------------------------------------------------
+
+vault_become_password: "VICTORIA'S_SECRET"
+vault_ansible_password: "VICTORIA'S_SECRET"
+vault_bootstrap_password: "VICTORIA'S_SECRET"

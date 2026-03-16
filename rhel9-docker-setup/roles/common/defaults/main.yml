@@ -1,0 +1,32 @@
+---
+# ---------------------------------------------------------------------------
+# Packages installed on every swarm node
+# ---------------------------------------------------------------------------
+common_packages:
+  - vim
+  - curl
+  - wget
+  - git
+  - net-tools
+  - bind-utils
+  - chrony
+  - policycoreutils-python-utils
+  - firewalld
+
+# ---------------------------------------------------------------------------
+# System timezone
+# ---------------------------------------------------------------------------
+common_timezone: UTC
+
+# ---------------------------------------------------------------------------
+# Firewall ports required by Docker Swarm
+#   2377/tcp  – cluster management traffic
+#   7946/tcp  – node-to-node communication
+#   7946/udp  – node-to-node communication
+#   4789/udp  – overlay network (VXLAN)
+# ---------------------------------------------------------------------------
+swarm_firewall_ports:
+  - { port: 2377, proto: tcp }
+  - { port: 7946, proto: tcp }
+  - { port: 7946, proto: udp }
+  - { port: 4789, proto: udp }

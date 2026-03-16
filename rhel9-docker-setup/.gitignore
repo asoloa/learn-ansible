@@ -1,0 +1,15 @@
+# Ansible vault password file – never commit this file
+.vault_pass
+
+# Timestamped execution logs produced by run-playbook.sh
+logs/
+
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Ansible retry files
+*.retry
+
+# Local override files
+*.local.yml

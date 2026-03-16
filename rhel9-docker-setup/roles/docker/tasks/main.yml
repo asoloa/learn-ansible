@@ -1,0 +1,77 @@
+---
+# ---------------------------------------------------------------------------
+# Remove legacy / conflicting Docker packages before adding Docker CE repo
+# ---------------------------------------------------------------------------
+- name: Remove legacy Docker packages
+  ansible.builtin.dnf:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-engine
+    state: absent
+
+- name: Install dnf-plugins-core
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+
+- name: Add Docker CE repository
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    owner: root
+    group: root
+    mode: "0644"
+
+# ---------------------------------------------------------------------------
+# Install Docker CE and related tools
+# ---------------------------------------------------------------------------
+- name: Install Docker CE packages
+  ansible.builtin.dnf:
+    name: "{{ docker_packages }}"
+    state: present
+
+# ---------------------------------------------------------------------------
+# Configure Docker daemon
+# ---------------------------------------------------------------------------
+- name: Ensure /etc/docker directory exists
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy Docker daemon configuration
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Docker
+
+# ---------------------------------------------------------------------------
+# Users and service
+# ---------------------------------------------------------------------------
+- name: Ensure docker group exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Add ansible_user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Enable and start Docker service
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true

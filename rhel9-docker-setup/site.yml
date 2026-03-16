@@ -1,0 +1,45 @@
+---
+# ---------------------------------------------------------------------------
+# site.yml – Main entry-point for the Docker Swarm playbook.
+#
+# Execution order matters:
+#   0. bootstrap    – Create ansible OS user + sudoers (runs as bootstrap_user)
+#   1. common       – hostname, /etc/hosts, packages, firewall, NTP
+#   2. docker       – Docker CE install and daemon configuration
+#   3. swarm_manager – Initialise the Swarm and publish join tokens
+#   4. swarm_worker  – Join worker nodes using the manager's token
+# ---------------------------------------------------------------------------
+
+- name: Bootstrap ansible user on all swarm nodes
+  hosts: swarm
+  gather_facts: false
+  vars:
+    ansible_user: "{{ bootstrap_user }}"
+    ansible_password: "{{ vault_bootstrap_password }}"
+    ansible_become: false
+  roles:
+    - bootstrap
+
+- name: Apply common base configuration to all swarm nodes
+  hosts: swarm
+  gather_facts: true
+  roles:
+    - common
+
+- name: Install and configure Docker CE on all swarm nodes
+  hosts: swarm
+  gather_facts: true
+  roles:
+    - docker
+
+- name: Initialise Docker Swarm manager
+  hosts: swarm_managers
+  gather_facts: true
+  roles:
+    - swarm_manager
+
+- name: Join worker nodes to the Docker Swarm
+  hosts: swarm_workers
+  gather_facts: true
+  roles:
+    - swarm_worker

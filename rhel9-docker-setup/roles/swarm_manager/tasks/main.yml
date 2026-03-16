@@ -1,0 +1,53 @@
+---
+# ---------------------------------------------------------------------------
+# Check current swarm state so every task can be idempotent
+# ---------------------------------------------------------------------------
+- name: Get current Docker Swarm state
+  ansible.builtin.shell:
+    cmd: docker info 2>/dev/null | grep "Swarm:" | awk '{print $2}'
+  register: swarm_state
+  changed_when: false
+
+# ---------------------------------------------------------------------------
+# Initialise swarm only when not already active
+# ---------------------------------------------------------------------------
+- name: Initialise Docker Swarm
+  ansible.builtin.command:
+    cmd: >
+      docker swarm init
+      --advertise-addr {{ swarm_advertise_addr }}
+      --listen-addr {{ swarm_advertise_addr }}:{{ swarm_port }}
+  when: swarm_state.stdout != 'active'
+  register: swarm_init
+
+# ---------------------------------------------------------------------------
+# Retrieve join tokens and expose them as hostvars for worker nodes
+# ---------------------------------------------------------------------------
+- name: Retrieve worker join token
+  ansible.builtin.shell:
+    cmd: docker swarm join-token -q worker
+  register: worker_token_raw
+  changed_when: false
+
+- name: Retrieve manager join token
+  ansible.builtin.shell:
+    cmd: docker swarm join-token -q manager
+  register: manager_token_raw
+  changed_when: false
+
+- name: Expose join tokens as host facts
+  ansible.builtin.set_fact:
+    swarm_worker_token: "{{ worker_token_raw.stdout | trim }}"
+    swarm_manager_token: "{{ manager_token_raw.stdout | trim }}"
+
+# ---------------------------------------------------------------------------
+# Verify and display swarm node list
+# ---------------------------------------------------------------------------
+- name: List swarm nodes
+  ansible.builtin.command: docker node ls
+  register: swarm_nodes
+  changed_when: false
+
+- name: Show swarm node list
+  ansible.builtin.debug:
+    var: swarm_nodes.stdout_lines

@@ -1,0 +1,8 @@
+---
+# ---------------------------------------------------------------------------
+# Update these values to match your manager node's actual IP address.
+# swarm_advertise_addr is used when initialising the swarm.
+# ---------------------------------------------------------------------------
+ansible_host: 192.168.254.201
+swarm_node_hostname: swarm-manager-01
+swarm_advertise_addr: 192.168.254.201

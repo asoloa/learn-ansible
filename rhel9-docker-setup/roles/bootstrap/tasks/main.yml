@@ -1,0 +1,67 @@
+---
+# ---------------------------------------------------------------------------
+# Ensure the ansible group exists
+# ---------------------------------------------------------------------------
+- name: Ensure ansible group exists
+  ansible.builtin.group:
+    name: "{{ ansible_os_user }}"
+    state: present
+
+# ---------------------------------------------------------------------------
+# Create the ansible OS user
+# The plaintext password (vault_ansible_password) is hashed at run-time;
+# it is never stored in plain text on the managed node.
+# ---------------------------------------------------------------------------
+- name: Create ansible user
+  ansible.builtin.user:
+    name: "{{ ansible_os_user }}"
+    group: "{{ ansible_os_user }}"
+    comment: "{{ ansible_os_user_comment }}"
+    shell: "{{ ansible_os_user_shell }}"
+    password: "{{ vault_ansible_password | password_hash('sha512') }}"
+    create_home: true
+    state: present
+
+# ---------------------------------------------------------------------------
+# Add ansible user to the wheel group so standard sudo rules apply
+# ---------------------------------------------------------------------------
+- name: Add ansible user to wheel group
+  ansible.builtin.user:
+    name: "{{ ansible_os_user }}"
+    groups: wheel
+    append: true
+
+# ---------------------------------------------------------------------------
+# Drop a dedicated sudoers file for the ansible user.
+# validate: runs visudo -cf before the file is placed, preventing syntax errors
+# from locking you out.
+# ---------------------------------------------------------------------------
+- name: Deploy sudoers drop-in for ansible user
+  ansible.builtin.copy:
+    dest: "{{ ansible_sudoers_file }}"
+    content: |
+      # Managed by Ansible – do not edit manually
+      {{ ansible_os_user }} {{ ansible_sudo_spec }}
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+# ---------------------------------------------------------------------------
+# Verify sudo works for the ansible user (smoke-test, non-destructive)
+# ---------------------------------------------------------------------------
+- name: Verify ansible user can run sudo
+  ansible.builtin.command:
+    cmd: >
+      su - {{ ansible_os_user }} -c
+      "echo '{{ vault_ansible_password }}' | sudo -S id -u"
+  register: sudo_check
+  changed_when: false
+  no_log: true
+
+- name: Assert sudo check returned uid 0 (root)
+  ansible.builtin.assert:
+    that:
+      - sudo_check.stdout | trim == "0"
+    fail_msg: "ansible user cannot sudo to root – check password and sudoers config."
+    success_msg: "ansible user sudo verified successfully."
